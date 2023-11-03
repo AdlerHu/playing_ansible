@@ -1,0 +1,5 @@
+server:
+  hosts:
+    10.10.2.156:
+      ansible_ssh_user: ansible
+      ansible_ssh_private_key_file: /home/adlerhu/.ssh/ansible_key
