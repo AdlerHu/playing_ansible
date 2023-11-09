@@ -1,0 +1,20 @@
+# Ansible Playbook for Status Check and Log File Update
+- name: Status Check and Update Log File
+  hosts: managed-node
+  remote_user: ansible
+  # Use sudo for elevated privileges
+  become: yes
+
+  tasks:
+    - name: Create or Update log file
+      # Use ansible.builtin.lineinfile to manage log file content
+      ansible.builtin.lineinfile:
+        path: /var/log/status_log.txt
+        # Create the file if it doesn't exist, and append the line with current timestamp and status
+        create: yes
+        line: |
+          {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}  Status: OK
+        # Set the file ownership to ansible user and group, and permissions to 0644
+        owner: ansible
+        group: ansible
+        mode: "0644"
