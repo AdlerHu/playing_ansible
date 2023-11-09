@@ -14,7 +14,7 @@
         create: yes
         line: |
           {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}  Status: OK
-        # Set the file ownership to ansible user and group, and permissions to 0644
+        # Set the file ownership to ansible user and group, and permissions to 644
         owner: ansible
         group: ansible
         mode: "644"
