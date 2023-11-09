@@ -17,4 +17,4 @@
         # Set the file ownership to ansible user and group, and permissions to 0644
         owner: ansible
         group: ansible
-        mode: "0644"
+        mode: "644"
