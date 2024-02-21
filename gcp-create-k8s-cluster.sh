@@ -41,6 +41,11 @@ apt-get update
 apt-get remove vim vim-runtime vim-tiny vim-common vim-scripts vim-doc -y
 apt-get install vim -y
 
+apt update
+apt install -y docker.io
+systemctl enable docker.service
+apt install -y apt-transport-https curl
+
 NEW_USER=adlerhu
 useradd -m $NEW_USER
 chsh -s /bin/bash $NEW_USER
@@ -53,6 +58,8 @@ chown -R $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh/
 touch /etc/sudoers.d/$NEW_USER
 chmod 440 /etc/sudoers.d/$NEW_USER
 echo "$NEW_USER ALL=(ALL:ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers.d/$NEW_USER
+
+usermod -aG docker $NEW_USER
 
 userdel ubuntu
 rm -rf /home/ubuntu'
