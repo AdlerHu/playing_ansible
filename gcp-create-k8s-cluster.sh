@@ -62,7 +62,19 @@ echo "$NEW_USER ALL=(ALL:ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers.d/$NEW_US
 usermod -aG docker $NEW_USER
 
 userdel ubuntu
-rm -rf /home/ubuntu'
+rm -rf /home/ubuntu
+
+apt-get install -y apt-transport-https ca-certificates curl
+
+curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+	
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee   /etc/apt/sources.list.d/kubernetes.list
+
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+
+swapoff -a'
 
 # Create 2 workers
 for i in 0 1; do
@@ -105,5 +117,17 @@ for i in 0 1; do
         usermod -aG docker $NEW_USER
 
         userdel ubuntu
-        rm -rf /home/ubuntu'
+        rm -rf /home/ubuntu
+        
+        apt-get install -y apt-transport-https ca-certificates curl
+
+        curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+	
+	    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee   /etc/apt/sources.list.d/kubernetes.list
+
+	    apt-get update
+        apt-get install -y kubelet kubeadm kubectl
+        apt-mark hold kubelet kubeadm kubectl
+
+        swapoff -a'
 done
