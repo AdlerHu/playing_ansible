@@ -1,29 +1,34 @@
 #!/bin/sh
 
-VPC=k8s-vpc
-SUBNET=k8s-subnet
+VPC_NAME=k8s-vpc
+SUBNET_NAME=k8s-subnet
 SUBNET_CIDR=10.240.0.0/24
 INTERNAL_FIREWALL_RULE=k8s-internal-firewall-rule
 EXTERNAL_FIREWALL_RULE=k8s-external-firewall-rule
-CONTROLLER=controller
+CONTROLLER_HOSTNAME=controller
+NODE_HOSTNAME=node
 CONTROLLER_IP=10.240.0.11
+REGION=asia-east1
+OFFICE_IP=118.163.16.148
+CONTROLLER_ZONE=asia-east1-b
+NODE_ZONE=asia-east1-a
 
 # Create VPC
-gcloud compute networks create $VPC --subnet-mode custom
+gcloud compute networks create $VPC_NAME --subnet-mode custom
 
 # Create subnet
-gcloud compute networks subnets create $SUBNET \
-	--network $VPC \
+gcloud compute networks subnets create $SUBNET_NAME \
+	--network $VPC_NAME \
 	--range $SUBNET_CIDR \
-    --region asia-east1
+    --region $REGION
 
 # Create firewall rule
-gcloud compute firewall-rules create $INTERNAL_FIREWALL_RULE --direction=INGRESS --priority=65533 --network=k8s-vpc --action=ALLOW --rules=all --source-ranges=10.240.0.0/24
+gcloud compute firewall-rules create $INTERNAL_FIREWALL_RULE --direction=INGRESS --priority=65533 --network=$VPC_NAME --action=ALLOW --rules=all --source-ranges=$SUBNET_CIDR
 
-gcloud compute firewall-rules create $EXTERNAL_FIREWALL_RULE --direction=INGRESS --priority=65534 --network=k8s-vpc --action=ALLOW --rules=tcp:22,icmp --source-ranges=118.163.16.148
+gcloud compute firewall-rules create $EXTERNAL_FIREWALL_RULE --direction=INGRESS --priority=65534 --network=$VPC_NAME --action=ALLOW --rules=tcp:22,icmp --source-ranges=$OFFICE_IP
 
 # Create Controller
-	gcloud compute instances create $CONTROLLER \
+gcloud compute instances create $CONTROLLER_HOSTNAME \
   --async \
   --boot-disk-size 30GB \
   --can-ip-forward \
@@ -32,10 +37,10 @@ gcloud compute firewall-rules create $EXTERNAL_FIREWALL_RULE --direction=INGRESS
   --machine-type e2-medium \
   --private-network-ip $CONTROLLER_IP \
   --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
-  --subnet $SUBNET \
-  --zone asia-east1-b \
-  --tags k8s-vpc,controller \
-    --metadata=startup-script='#!/bin/bash
+  --subnet $SUBNET_NAME \
+  --zone $CONTROLLER_ZONE \
+  --tags $VPC_NAME,$CONTROLLER_HOSTNAME \
+  --metadata=startup-script='#!/bin/bash
 
 apt-get update
 apt-get remove vim vim-runtime vim-tiny vim-common vim-scripts vim-doc -y
@@ -78,7 +83,7 @@ swapoff -a'
 
 # Create 2 workers
 for i in 0 1; do
-    gcloud compute instances create worker${i} \
+    gcloud compute instances create $NODE_HOSTNAME${i} \
         --async \
         --boot-disk-size 30GB \
         --can-ip-forward \
@@ -87,10 +92,10 @@ for i in 0 1; do
         --machine-type e2-medium \
         --private-network-ip 10.240.0.2${i} \
         --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
-        --subnet $SUBNET \
-        --zone asia-east1-a \
-        --tags k8s-vpc,worker \
-            --metadata=startup-script='#!/bin/bash
+        --subnet $SUBNET_NAME \
+        --zone $NODE_ZONE \
+        --tags $VPC_NAME,$NODE_HOSTNAME \
+        --metadata=startup-script='#!/bin/bash
 
         apt-get update
         apt-get remove vim vim-runtime vim-tiny vim-common vim-scripts vim-doc -y
