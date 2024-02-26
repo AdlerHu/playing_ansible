@@ -58,6 +58,10 @@ usermod -aG sudo $NEW_USER
 mkdir /home/$NEW_USER/.ssh/
 touch /home/$NEW_USER/.ssh/authorized_keys
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCja3gkvbfRMZU1zb+2yQjsu07vXVu7pk4zRYF22qThI690IWajBNLDT3NJTCAtfHPVvUIue1Byl0zIyNxxYj0rRIHtMbY5maG8u0ykxfiY/UxWp1gPOPKhatoLOd53aKUEQZ+aqKkt35go0ktULLiP/L6bt5TUiyxdD7PL6OF/OGzNULIwuQwVuX5VyC6LWMovdOCL0fF1wSDaGne7kGiGj5Cvlk/rvXpMZKyhaxnp2xkwIqjmPjK9HO4JuJXJHyuVhckqOP8UlHMJ7CuQhtTY2aWyKCh/Slan6/LR9MXmHH1FkXBAFb4xzXM6E7vPvMI8dIJVzKqiPBW30FsGDTOtbgixD5kn/s3KBigQT5mIqU5GX/rbKUcakYhhnX88L8hiYMuJbVJ/QFs04/cAxeKCwbYs346qCmKPfwqNewpJrjkfvOkscmU2OS1U9vhzVgw5PgdECvE3SQmatIIvGj1U2N8ppno0pjbd37Vz70niK3HrQ1cspIOQf5JB0Imfw5U= adlerhu " >> /home/$NEW_USER/.ssh/authorized_keys
+echo "
+10.240.0.11 controller
+10.240.0.20 node0
+10.240.0.21 node1" >> /etc/hosts
 chown -R $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh/
 
 touch /etc/sudoers.d/$NEW_USER
@@ -113,6 +117,11 @@ for i in 0 1; do
         mkdir /home/$NEW_USER/.ssh/
         touch /home/$NEW_USER/.ssh/authorized_keys
         echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCja3gkvbfRMZU1zb+2yQjsu07vXVu7pk4zRYF22qThI690IWajBNLDT3NJTCAtfHPVvUIue1Byl0zIyNxxYj0rRIHtMbY5maG8u0ykxfiY/UxWp1gPOPKhatoLOd53aKUEQZ+aqKkt35go0ktULLiP/L6bt5TUiyxdD7PL6OF/OGzNULIwuQwVuX5VyC6LWMovdOCL0fF1wSDaGne7kGiGj5Cvlk/rvXpMZKyhaxnp2xkwIqjmPjK9HO4JuJXJHyuVhckqOP8UlHMJ7CuQhtTY2aWyKCh/Slan6/LR9MXmHH1FkXBAFb4xzXM6E7vPvMI8dIJVzKqiPBW30FsGDTOtbgixD5kn/s3KBigQT5mIqU5GX/rbKUcakYhhnX88L8hiYMuJbVJ/QFs04/cAxeKCwbYs346qCmKPfwqNewpJrjkfvOkscmU2OS1U9vhzVgw5PgdECvE3SQmatIIvGj1U2N8ppno0pjbd37Vz70niK3HrQ1cspIOQf5JB0Imfw5U= adlerhu " >> /home/$NEW_USER/.ssh/authorized_keys
+        echo "
+        10.240.0.11 controller
+        10.240.0.20 node0
+        10.240.0.21 node1" >> /etc/hosts
+        
         chown -R $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh/
 
         touch /etc/sudoers.d/$NEW_USER
