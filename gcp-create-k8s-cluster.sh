@@ -3,11 +3,25 @@
 VPC_NAME=k8s-vpc
 SUBNET_NAME=k8s-subnet
 SUBNET_CIDR=10.240.0.0/24
+
 INTERNAL_FIREWALL_RULE=k8s-internal-firewall-rule
 EXTERNAL_FIREWALL_RULE=k8s-external-firewall-rule
+
 CONTROLLER_HOSTNAME=controller
 NODE_HOSTNAME=node
-CONTROLLER_IP=10.240.0.11
+
+CONTROLLER_INTERNAL_IP=controller-ip
+CONTROLLER_EXTERNAL_IP=controller-public-ip
+CONTROLLER_INTERNAL_ADDRESS=10.240.0.11
+
+NODE0_INTERNAL_IP=node0-ip
+NODE0_EXTERNAL_IP=node0-public-ip
+NODE0_EXTERNAL_ADDRESS=10.240.0.20
+
+NODE1_INTERNAL_IP=node1-ip
+NODE1_EXTERNAL_IP=node1-public-ip
+NODE1_EXTERNAL_ADDRESS=10.240.0.21
+
 REGION=asia-east1
 OFFICE_IP=118.163.16.148
 CONTROLLER_ZONE=asia-east1-b
@@ -24,8 +38,15 @@ gcloud compute networks subnets create $SUBNET_NAME \
 
 # Create firewall rule
 gcloud compute firewall-rules create $INTERNAL_FIREWALL_RULE --direction=INGRESS --priority=65533 --network=$VPC_NAME --action=ALLOW --rules=all --source-ranges=$SUBNET_CIDR
-
 gcloud compute firewall-rules create $EXTERNAL_FIREWALL_RULE --direction=INGRESS --priority=65534 --network=$VPC_NAME --action=ALLOW --rules=tcp:22,icmp --source-ranges=$OFFICE_IP
+
+# Create Static Internal IP
+gcloud compute addresses create $CONTROLLER_INTERNAL_IP --addresses=$CONTROLLER_INTERNAL_ADDRESS --region=$REGION --subnet=$SUBNET_NAME
+gcloud compute addresses create $NODE0_INTERNAL_IP --addresses=$NODE0_EXTERNAL_ADDRESS --region=$REGION --subnet=$SUBNET_NAME
+gcloud compute addresses create $NODE1_INTERNAL_IP --addresses=$NODE1_EXTERNAL_ADDRESS --region=$REGION --subnet=$SUBNET_NAME
+
+# Create Static External IP
+gcloud compute addresses create $CONTROLLER_EXTERNAL_IP $NODE0_EXTERNAL_IP $NODE1_EXTERNAL_IP --region=$REGION
 
 # Create Controller
 gcloud compute instances create $CONTROLLER_HOSTNAME \
@@ -35,8 +56,8 @@ gcloud compute instances create $CONTROLLER_HOSTNAME \
   --image-family ubuntu-2204-lts \
   --image-project ubuntu-os-cloud \
   --machine-type e2-medium \
-  --private-network-ip $CONTROLLER_IP \
-  --address controller-public-ip \
+  --private-network-ip $CONTROLLER_INTERNAL_IP \
+  --address $CONTROLLER_EXTERNAL_IP \
   --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
   --subnet $SUBNET_NAME \
   --zone $CONTROLLER_ZONE \
@@ -78,7 +99,7 @@ for i in 0 1; do
         --image-family ubuntu-2204-lts \
         --image-project ubuntu-os-cloud \
         --machine-type e2-medium \
-        --private-network-ip 10.240.0.2${i} \
+        --private-network-ip node${i}-ip \
         --address node${i}-public-ip \
         --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
         --subnet $SUBNET_NAME \
@@ -91,7 +112,7 @@ for i in 0 1; do
         apt-get install vim -y
 
     	apt update
-	    apt install -y apt-transport-https curl
+	apt install -y apt-transport-https curl
 
         NEW_USER=adlerhu
         useradd -m $NEW_USER
