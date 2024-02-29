@@ -36,6 +36,7 @@ gcloud compute instances create $CONTROLLER_HOSTNAME \
   --image-project ubuntu-os-cloud \
   --machine-type e2-medium \
   --private-network-ip $CONTROLLER_IP \
+  --address controller-public-ip \
   --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
   --subnet $SUBNET_NAME \
   --zone $CONTROLLER_ZONE \
@@ -47,8 +48,6 @@ apt-get remove vim vim-runtime vim-tiny vim-common vim-scripts vim-doc -y
 apt-get install vim -y
 
 apt update
-apt install -y docker.io
-systemctl enable docker.service
 apt install -y apt-transport-https curl
 
 NEW_USER=adlerhu
@@ -57,7 +56,6 @@ chsh -s /bin/bash $NEW_USER
 usermod -aG sudo $NEW_USER
 mkdir /home/$NEW_USER/.ssh/
 touch /home/$NEW_USER/.ssh/authorized_keys
-echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCja3gkvbfRMZU1zb+2yQjsu07vXVu7pk4zRYF22qThI690IWajBNLDT3NJTCAtfHPVvUIue1Byl0zIyNxxYj0rRIHtMbY5maG8u0ykxfiY/UxWp1gPOPKhatoLOd53aKUEQZ+aqKkt35go0ktULLiP/L6bt5TUiyxdD7PL6OF/OGzNULIwuQwVuX5VyC6LWMovdOCL0fF1wSDaGne7kGiGj5Cvlk/rvXpMZKyhaxnp2xkwIqjmPjK9HO4JuJXJHyuVhckqOP8UlHMJ7CuQhtTY2aWyKCh/Slan6/LR9MXmHH1FkXBAFb4xzXM6E7vPvMI8dIJVzKqiPBW30FsGDTOtbgixD5kn/s3KBigQT5mIqU5GX/rbKUcakYhhnX88L8hiYMuJbVJ/QFs04/cAxeKCwbYs346qCmKPfwqNewpJrjkfvOkscmU2OS1U9vhzVgw5PgdECvE3SQmatIIvGj1U2N8ppno0pjbd37Vz70niK3HrQ1cspIOQf5JB0Imfw5U= adlerhu " >> /home/$NEW_USER/.ssh/authorized_keys
 echo "
 10.240.0.11 controller
 10.240.0.20 node0
@@ -68,22 +66,8 @@ touch /etc/sudoers.d/$NEW_USER
 chmod 440 /etc/sudoers.d/$NEW_USER
 echo "$NEW_USER ALL=(ALL:ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers.d/$NEW_USER
 
-usermod -aG docker $NEW_USER
-
 userdel ubuntu
-rm -rf /home/ubuntu
-
-apt-get install -y apt-transport-https ca-certificates curl
-
-curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-	
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee   /etc/apt/sources.list.d/kubernetes.list
-
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
-
-swapoff -a'
+rm -rf /home/ubuntu'
 
 # Create 2 workers
 for i in 0 1; do
@@ -95,6 +79,7 @@ for i in 0 1; do
         --image-project ubuntu-os-cloud \
         --machine-type e2-medium \
         --private-network-ip 10.240.0.2${i} \
+        --address node${i}-public-ip \
         --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
         --subnet $SUBNET_NAME \
         --zone $NODE_ZONE \
@@ -106,8 +91,6 @@ for i in 0 1; do
         apt-get install vim -y
 
     	apt update
-	    apt install -y docker.io
-	    systemctl enable docker.service
 	    apt install -y apt-transport-https curl
 
         NEW_USER=adlerhu
@@ -116,11 +99,10 @@ for i in 0 1; do
         usermod -aG sudo $NEW_USER
         mkdir /home/$NEW_USER/.ssh/
         touch /home/$NEW_USER/.ssh/authorized_keys
-        echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCja3gkvbfRMZU1zb+2yQjsu07vXVu7pk4zRYF22qThI690IWajBNLDT3NJTCAtfHPVvUIue1Byl0zIyNxxYj0rRIHtMbY5maG8u0ykxfiY/UxWp1gPOPKhatoLOd53aKUEQZ+aqKkt35go0ktULLiP/L6bt5TUiyxdD7PL6OF/OGzNULIwuQwVuX5VyC6LWMovdOCL0fF1wSDaGne7kGiGj5Cvlk/rvXpMZKyhaxnp2xkwIqjmPjK9HO4JuJXJHyuVhckqOP8UlHMJ7CuQhtTY2aWyKCh/Slan6/LR9MXmHH1FkXBAFb4xzXM6E7vPvMI8dIJVzKqiPBW30FsGDTOtbgixD5kn/s3KBigQT5mIqU5GX/rbKUcakYhhnX88L8hiYMuJbVJ/QFs04/cAxeKCwbYs346qCmKPfwqNewpJrjkfvOkscmU2OS1U9vhzVgw5PgdECvE3SQmatIIvGj1U2N8ppno0pjbd37Vz70niK3HrQ1cspIOQf5JB0Imfw5U= adlerhu " >> /home/$NEW_USER/.ssh/authorized_keys
         echo "
-        10.240.0.11 controller
-        10.240.0.20 node0
-        10.240.0.21 node1" >> /etc/hosts
+10.240.0.11 controller
+10.240.0.20 node0
+10.240.0.21 node1" >> /etc/hosts
         
         chown -R $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh/
 
@@ -128,20 +110,6 @@ for i in 0 1; do
         chmod 440 /etc/sudoers.d/$NEW_USER
         echo "$NEW_USER ALL=(ALL:ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers.d/$NEW_USER
 
-        usermod -aG docker $NEW_USER
-
         userdel ubuntu
-        rm -rf /home/ubuntu
-        
-        apt-get install -y apt-transport-https ca-certificates curl
-
-        curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-	
-	    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee   /etc/apt/sources.list.d/kubernetes.list
-
-	    apt-get update
-        apt-get install -y kubelet kubeadm kubectl
-        apt-mark hold kubelet kubeadm kubectl
-
-        swapoff -a'
+        rm -rf /home/ubuntu'
 done
