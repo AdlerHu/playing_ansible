@@ -11,15 +11,12 @@ CONTROLLER_HOSTNAME=controller
 NODE_HOSTNAME=node
 
 CONTROLLER_INTERNAL_IP=controller-ip
-CONTROLLER_EXTERNAL_IP=controller-public-ip
 CONTROLLER_INTERNAL_ADDRESS=10.240.0.11
 
 NODE0_INTERNAL_IP=node0-ip
-NODE0_EXTERNAL_IP=node0-public-ip
 NODE0_EXTERNAL_ADDRESS=10.240.0.20
 
 NODE1_INTERNAL_IP=node1-ip
-NODE1_EXTERNAL_IP=node1-public-ip
 NODE1_EXTERNAL_ADDRESS=10.240.0.21
 
 REGION=asia-east1
@@ -32,8 +29,8 @@ gcloud compute networks create $VPC_NAME --subnet-mode custom
 
 # Create subnet
 gcloud compute networks subnets create $SUBNET_NAME \
-	--network $VPC_NAME \
-	--range $SUBNET_CIDR \
+    --network $VPC_NAME \
+    --range $SUBNET_CIDR \
     --region $REGION
 
 # Create firewall rule
@@ -45,8 +42,8 @@ gcloud compute addresses create $CONTROLLER_INTERNAL_IP --addresses=$CONTROLLER_
 gcloud compute addresses create $NODE0_INTERNAL_IP --addresses=$NODE0_EXTERNAL_ADDRESS --region=$REGION --subnet=$SUBNET_NAME
 gcloud compute addresses create $NODE1_INTERNAL_IP --addresses=$NODE1_EXTERNAL_ADDRESS --region=$REGION --subnet=$SUBNET_NAME
 
-# Create Static External IP
-gcloud compute addresses create $CONTROLLER_EXTERNAL_IP $NODE0_EXTERNAL_IP $NODE1_EXTERNAL_IP --region=$REGION
+# Create Static External IP for Cloud NAT
+gcloud compute addresses create nat-ip --region=$REGION
 
 # Create Controller
 gcloud compute instances create $CONTROLLER_HOSTNAME \
@@ -57,7 +54,7 @@ gcloud compute instances create $CONTROLLER_HOSTNAME \
   --image-project ubuntu-os-cloud \
   --machine-type e2-medium \
   --private-network-ip $CONTROLLER_INTERNAL_IP \
-  --address $CONTROLLER_EXTERNAL_IP \
+  --no-address \
   --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
   --subnet $SUBNET_NAME \
   --zone $CONTROLLER_ZONE \
@@ -100,7 +97,7 @@ for i in 0 1; do
         --image-project ubuntu-os-cloud \
         --machine-type e2-medium \
         --private-network-ip node${i}-ip \
-        --address node${i}-public-ip \
+        --no-address \
         --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
         --subnet $SUBNET_NAME \
         --zone $NODE_ZONE \
@@ -112,7 +109,7 @@ for i in 0 1; do
         apt-get install vim -y
 
     	apt update
-	apt install -y apt-transport-https curl
+    	apt install -y apt-transport-https curl
 
         NEW_USER=adlerhu
         useradd -m $NEW_USER
